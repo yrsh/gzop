@@ -4,18 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"math"
 	"simplifier"
 	"structs"
 )
 
-func ProcessJSON(geojson structs.Geojson, zoom int) {
+//func ProcessJSON(geojson structs.Geojson, zoom int) structs.Geojson {
+func ProcessJSON(geojson structs.Geojson, zoom int) []byte {
 	simplified := geojson
 	tol := PixelSize(zoom, 256)
-	err := errors.New("error parsing feature")
 	for i := range simplified.Features {
 		//simplified.Features[i] = processFeature(simplified.Features[i], tol)
 		processFeature(&simplified.Features[i], tol)
 	}
+	//return simplified
+	return marshalGeom(simplified)
 }
 
 func processFeature(feat *structs.Feature, tol float64) {
@@ -39,7 +42,7 @@ func processFeature(feat *structs.Feature, tol float64) {
 	case "Polygon":
 		var polygon [][][]float64
 		err = json.Unmarshal(geom.Coordinates, &polygon)
-		geom.Polygon = simplifyPolygon(polygon, tol, true)
+		geom.Polygon = simplifyPolygon(polygon, tol)
 		(*feat).Geometry = marshalGeom(geom.Polygon)
 		//
 	case "MultiPoint":
@@ -47,17 +50,20 @@ func processFeature(feat *structs.Feature, tol float64) {
 		err = json.Unmarshal(geom.Coordinates, &multiPoint)
 		//
 	case "MultilineString":
-		var multilineString [][][]float64
+		var multiLineString [][][]float64
 		err = json.Unmarshal(geom.Coordinates, &multiLineString)
 		//
 	case "MultiPolygon":
 		var multiPolygon [][][][]float64
 		err = json.Unmarshal(geom.Coordinates, &multiPolygon)
-		geom.MultiPolygon = simplifyPolygon(multiPolygon, tol, true)
-		(*feat).Geometry = marshalGeom(MultiPolygon)
+		geom.MultiPolygon = simplifyMultiPolygon(multiPolygon, tol)
+		(*feat).Geometry = marshalGeom(geom.MultiPolygon)
 		//
 	default:
 		err = errors.New("Unknown type of geometry")
+	}
+	if err != nil {
+		log.Print(err)
 	}
 
 }
@@ -74,7 +80,7 @@ func simplifyPolygon(pl [][][]float64, tol float64) [][][]float64 {
 	return r
 }
 
-func simplifyMultiPolygon(mpl [][][][]float64, tol float64) [][][]float64 {
+func simplifyMultiPolygon(mpl [][][][]float64, tol float64) [][][][]float64 {
 	r := make([][][][]float64, len(mpl))
 	for i := range mpl {
 		r[i] = simplifyPolygon(mpl[i], tol)
@@ -88,7 +94,7 @@ func marshalGeom(i interface{}) []byte {
 		return b
 	} else {
 		log.Print(err)
-		return i
+		return []byte{}
 	}
 }
 

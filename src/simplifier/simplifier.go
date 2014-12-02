@@ -1,7 +1,7 @@
-package simplify
+package simplifier
 
 import (
-	"structs"
+//"structs"
 )
 
 //-statck------------------------------------------------
@@ -60,7 +60,8 @@ func simplifyRadialDist(points [][]float64, sqTolerance float64) [][]float64 {
 			prevPoint = point
 		}
 	}
-	if prevPoint != point {
+	//if prevPoint != point {
+	if prevPoint == nil {
 		newPoints = append(newPoints, point)
 	}
 	return newPoints
