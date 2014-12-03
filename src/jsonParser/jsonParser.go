@@ -23,6 +23,7 @@ func ProcessJSON(geojson structs.Geojson, zoom int) []byte {
 
 func processFeature(feat *structs.Feature, tol float64) {
 	var geom structs.Geometry
+	var exGeom structs.ExportGeom
 	err := json.Unmarshal((*feat).Geometry, &geom)
 	if err != nil {
 		log.Print(err)
@@ -36,14 +37,20 @@ func processFeature(feat *structs.Feature, tol float64) {
 	case "LineString":
 		var lineString [][]float64
 		err = json.Unmarshal(geom.Coordinates, &lineString)
-		geom.LineString = simplifier.Simplify(lineString, tol, true)
-		(*feat).Geometry = marshalGeom(geom.LineString)
+		smpl := simplifier.Simplify(lineString, tol, true)
+		exGeom.Coordinates = smpl
+		exGeom.Type = geom.Type
+		(*feat).Geometry = marshalGeom(exGeom)
+		(*feat).Bbox = bboxf(findLineBounds(smpl))
 		//
 	case "Polygon":
 		var polygon [][][]float64
 		err = json.Unmarshal(geom.Coordinates, &polygon)
-		geom.Polygon = simplifyPolygon(polygon, tol)
-		(*feat).Geometry = marshalGeom(geom.Polygon)
+		smpl := simplifyPolygon(polygon, tol)
+		exGeom.Coordinates = smpl
+		exGeom.Type = geom.Type
+		(*feat).Geometry = marshalGeom(exGeom)
+		(*feat).Bbox = bboxf(findPolygonBounds(smpl))
 		//
 	case "MultiPoint":
 		var multiPoint [][]float64
@@ -56,8 +63,11 @@ func processFeature(feat *structs.Feature, tol float64) {
 	case "MultiPolygon":
 		var multiPolygon [][][][]float64
 		err = json.Unmarshal(geom.Coordinates, &multiPolygon)
-		geom.MultiPolygon = simplifyMultiPolygon(multiPolygon, tol)
-		(*feat).Geometry = marshalGeom(geom.MultiPolygon)
+		smpl := simplifyMultiPolygon(multiPolygon, tol)
+		exGeom.Coordinates = smpl
+		exGeom.Type = geom.Type
+		(*feat).Geometry = marshalGeom(exGeom)
+		(*feat).Bbox = bboxf(findMultiPolygonBounds(smpl))
 		//
 	default:
 		err = errors.New("Unknown type of geometry")
@@ -68,9 +78,7 @@ func processFeature(feat *structs.Feature, tol float64) {
 
 }
 
-// func simplifyLineString(ls [][]float64, tol float64) [][]float64 {
-// 	return simplifier.Simplify(ls, tol, true)
-// }
+//-----------------------------------------
 
 func simplifyPolygon(pl [][][]float64, tol float64) [][][]float64 {
 	r := make([][][]float64, len(pl))
@@ -88,6 +96,63 @@ func simplifyMultiPolygon(mpl [][][][]float64, tol float64) [][][][]float64 {
 	return r
 }
 
+//-----------------------------------------
+func findLineBounds(ls [][]float64) [][]float64 {
+	//log.Println(ls)
+	minLng := ls[0][0]
+	maxLng := ls[0][0]
+	minLat := ls[0][1]
+	maxLat := ls[0][1]
+	for i := range ls {
+		if ls[i][0] < minLng {
+			minLng = ls[i][0]
+		}
+		if ls[i][0] > maxLng {
+			maxLng = ls[i][0]
+		}
+		if ls[i][1] < minLat {
+			minLat = ls[i][1]
+		}
+		if ls[i][1] > maxLat {
+			maxLat = ls[i][1]
+		}
+	}
+	//log.Println([]float64{minLng, minLat, maxLng, maxLat})
+	return [][]float64{{minLng, minLat}, {maxLng, maxLat}}
+}
+
+func findPolygonBounds(pl [][][]float64) [][]float64 {
+	//log.Println(pl)
+	//bounds := make([][]float64, len(pl))
+	var bounds [][]float64
+	for i := range pl {
+		//bounds[i] = findLineBounds(pl[i])
+		b := findLineBounds(pl[i])
+		bounds = append(bounds, b[0], b[1])
+	}
+	//log.Println("PL")
+	return findLineBounds(bounds)
+}
+
+func findMultiPolygonBounds(mpl [][][][]float64) [][]float64 {
+	//log.Println(mpl)
+	//bounds := make([][]float64, len(mpl))
+	var bounds [][]float64
+	for i := range mpl {
+		//bounds[i] = findPolygonBounds(mpl[i])
+		b := findPolygonBounds(mpl[i])
+		bounds = append(bounds, b[0], b[1])
+	}
+	//log.Println("MPL")
+	return findLineBounds(bounds)
+}
+
+func bboxf(f [][]float64) []float64 {
+	return []float64{f[0][0], f[0][1], f[1][0], f[1][1]}
+}
+
+//---------------------------------------------------
+
 func marshalGeom(i interface{}) []byte {
 	b, err := json.Marshal(i)
 	if err == nil {
@@ -98,7 +163,6 @@ func marshalGeom(i interface{}) []byte {
 	}
 }
 
-//---------------------------------------------------
 func PixelSize(zoom, tileSize int) float64 {
 	_, latT := Conv(180, -85, float64(zoom), float64(tileSize))
 	YmaxPx := latT * 256

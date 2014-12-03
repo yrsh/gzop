@@ -5,9 +5,10 @@ import (
 )
 
 type Geojson struct {
-	Type     string          `json:"type"`
-	Crs      json.RawMessage `json:"crs"`
-	Features []Feature       `json:"features"`
+	Type string `json:"type"`
+	//Crs  json.RawMessage `json:"crs"`
+	Crs      map[string]interface{} `json:"crs"`
+	Features []Feature              `json:"features"`
 }
 
 type Feature struct {
@@ -26,6 +27,11 @@ type Geometry struct {
 	MultiPoint      [][]float64
 	MultiLineString [][][]float64
 	MultiPolygon    [][][][]float64
+}
+
+type ExportGeom struct {
+	Type        string      `json:"type"`
+	Coordinates interface{} `json:"coordinates"`
 }
 
 // type Point []float64
