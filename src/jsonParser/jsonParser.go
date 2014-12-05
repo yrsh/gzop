@@ -5,19 +5,16 @@ import (
 	"errors"
 	"log"
 	"math"
-	"simplifier"
+	simplifier "github.com/yrsh/simplify-go"
 	"structs"
 )
 
-//func ProcessJSON(geojson structs.Geojson, zoom int) structs.Geojson {
 func ProcessJSON(geojson structs.Geojson, zoom int) []byte {
 	simplified := geojson
 	tol := PixelSize(zoom, 256)
 	for i := range simplified.Features {
-		//simplified.Features[i] = processFeature(simplified.Features[i], tol)
 		processFeature(&simplified.Features[i], tol)
 	}
-	//return simplified
 	return marshalGeom(simplified)
 }
 

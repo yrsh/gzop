@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ func main() {
 	//
 	log.Println("porcessing JSONs")
 	files := fileWR.ReadFolder(*jsonFolder)
-	for i := *minZoom; i < *maxZoom; i++ {
+	for i := *minZoom; i <= *maxZoom; i++ {
 		for j := range files {
 			wg.Add(1)
 			go func(f string, i int) {
@@ -29,7 +30,7 @@ func main() {
 				jsonS := jsonParser.ProcessJSON(jsonRaw, i)
 				os.MkdirAll(*outFolder+"/"+strconv.Itoa(i), 0777)
 				fileWR.WiteFile(*outFolder+"/"+
-					strconv.Itoa(i)+"/"+f, jsonS)
+					strconv.Itoa(i)+"/"+strings.Replace(f, ".geojson", ".json", -1), jsonS)
 				defer func() {
 					wg.Done()
 				}()
