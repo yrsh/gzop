@@ -33,9 +33,5 @@ func ReadFolder(path string) []os.FileInfo {
 		log.Printf("dir error: %v\n", err)
 		os.Exit(1)
 	}
-	// log.Print(files)
-	// for i := range files {
-	// 	log.Println(files[i].Name())
-	// }
 	return files
 }
