@@ -95,7 +95,6 @@ func simplifyMultiPolygon(mpl [][][][]float64, tol float64) [][][][]float64 {
 
 //-----------------------------------------
 func findLineBounds(ls [][]float64) [][]float64 {
-	//log.Println(ls)
 	minLng := ls[0][0]
 	maxLng := ls[0][0]
 	minLat := ls[0][1]
@@ -114,33 +113,24 @@ func findLineBounds(ls [][]float64) [][]float64 {
 			maxLat = ls[i][1]
 		}
 	}
-	//log.Println([]float64{minLng, minLat, maxLng, maxLat})
 	return [][]float64{{minLng, minLat}, {maxLng, maxLat}}
 }
 
 func findPolygonBounds(pl [][][]float64) [][]float64 {
-	//log.Println(pl)
-	//bounds := make([][]float64, len(pl))
 	var bounds [][]float64
 	for i := range pl {
-		//bounds[i] = findLineBounds(pl[i])
 		b := findLineBounds(pl[i])
 		bounds = append(bounds, b[0], b[1])
 	}
-	//log.Println("PL")
 	return findLineBounds(bounds)
 }
 
 func findMultiPolygonBounds(mpl [][][][]float64) [][]float64 {
-	//log.Println(mpl)
-	//bounds := make([][]float64, len(mpl))
 	var bounds [][]float64
 	for i := range mpl {
-		//bounds[i] = findPolygonBounds(mpl[i])
 		b := findPolygonBounds(mpl[i])
 		bounds = append(bounds, b[0], b[1])
 	}
-	//log.Println("MPL")
 	return findLineBounds(bounds)
 }
 
