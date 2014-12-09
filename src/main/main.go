@@ -1,36 +1,37 @@
 package main
 
 import (
+	"configParser"
 	"fileWR"
 	"flag"
 	"jsonParser"
 	"log"
 	"os"
 	"strconv"
-	"strings"
+	//"strings"
 	"sync"
 )
 
 var wg sync.WaitGroup
-var minZoom = flag.Int("minz", 3, "min zoom")
-var maxZoom = flag.Int("maxz", 18, "max zoom")
-var jsonFolder = flag.String("inp", "", "input folder with jsons")
-var outFolder = flag.String("out", "", "output folder for jsons")
+
+var conffile = flag.String("conf", "", "config file")
 
 func main() {
+	//
 	flag.Parse()
+	conf := configParser.GetConf(*conffile)
 	//
 	log.Println("porcessing JSONs")
-	files := fileWR.ReadFolder(*jsonFolder)
-	for i := *minZoom; i <= *maxZoom; i++ {
+	files := fileWR.ReadFolder(conf.Folders.Input)
+	for i := conf.Zooms.Min; i <= conf.Zooms.Max; i++ {
 		for j := range files {
 			wg.Add(1)
 			go func(f string, i int) {
-				jsonRaw := fileWR.ReadFile(*jsonFolder + "/" + f)
-				jsonS := jsonParser.ProcessJSON(jsonRaw, i)
-				os.MkdirAll(*outFolder+"/"+strconv.Itoa(i), 0777)
-				fileWR.WiteFile(*outFolder+"/"+
-					strconv.Itoa(i)+"/"+strings.Replace(f, ".geojson", ".json", -1), jsonS)
+				jsonRaw := fileWR.ReadFile(conf.Folders.Input + "/" + f)
+				jsonS, name := jsonParser.ProcessJSON(jsonRaw, i, conf.Naming.Feature_prop)
+				os.MkdirAll(conf.Folders.Output+"/"+strconv.Itoa(i), 0777)
+				fileWR.WiteFile(conf.Folders.Output+"/"+
+					strconv.Itoa(i)+"/"+name, jsonS)
 				defer func() {
 					wg.Done()
 				}()

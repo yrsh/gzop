@@ -5,17 +5,16 @@ import (
 )
 
 type Geojson struct {
-	Type string `json:"type"`
-	//Crs  json.RawMessage `json:"crs"`
+	Type     string                 `json:"type"`
 	Crs      map[string]interface{} `json:"crs"`
 	Features []Feature              `json:"features"`
 }
 
 type Feature struct {
-	Type       string          `json:"type"`
-	Properties json.RawMessage `json:"properties"`
-	Geometry   json.RawMessage `json:"geometry"`
-	Bbox       []float64       `json:"bbox"` //lng,lat
+	Type       string                 `json:"type"`
+	Properties map[string]interface{} `json:"properties"`
+	Geometry   json.RawMessage        `json:"geometry"`
+	Bbox       []float64              `json:"bbox"` //lng,lat
 }
 
 type Geometry struct {
@@ -33,13 +32,3 @@ type ExportGeom struct {
 	Type        string      `json:"type"`
 	Coordinates interface{} `json:"coordinates"`
 }
-
-// type Point []float64
-
-// type LineString []Point
-
-// type Polygon []Polyline
-
-// type MultiPolygon []Polygon
-
-//`json:"field_a"`

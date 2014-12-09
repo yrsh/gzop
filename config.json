@@ -1,0 +1,14 @@
+{
+    "naming": {
+        "original": false,
+        "feature_prop": "ADM0_A3"
+    },
+    "zooms": {
+        "min": 3,
+        "max": 4
+    },
+    "folders":{
+        "input":"Contries_only_NE",
+        "output":"outc"
+    }
+}

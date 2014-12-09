@@ -3,19 +3,24 @@ package jsonParser
 import (
 	"encoding/json"
 	"errors"
+	simplifier "github.com/yrsh/simplify-go"
 	"log"
 	"math"
-	simplifier "github.com/yrsh/simplify-go"
 	"structs"
 )
 
-func ProcessJSON(geojson structs.Geojson, zoom int) []byte {
+func ProcessJSON(geojson structs.Geojson, zoom int, featProp string) ([]byte, string) {
 	simplified := geojson
 	tol := PixelSize(zoom, 256)
 	for i := range simplified.Features {
 		processFeature(&simplified.Features[i], tol)
 	}
-	return marshalGeom(simplified)
+	_, ok := simplified.Features[0].Properties[featProp].(string)
+	if ok {
+		return marshalGeom(simplified), simplified.Features[0].Properties[featProp].(string)
+	} else {
+		return marshalGeom(simplified), "unknown"
+	}
 }
 
 func processFeature(feat *structs.Feature, tol float64) {
@@ -25,6 +30,7 @@ func processFeature(feat *structs.Feature, tol float64) {
 	if err != nil {
 		log.Print(err)
 	}
+	//name := (*feat).Properties[featProp]
 	//
 	switch geom.Type {
 	case "Point":
@@ -72,7 +78,6 @@ func processFeature(feat *structs.Feature, tol float64) {
 	if err != nil {
 		log.Print(err)
 	}
-
 }
 
 //-----------------------------------------
