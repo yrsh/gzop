@@ -8,7 +8,7 @@
         "max": 4
     },
     "folders":{
-        "input":"Contries_only_NE",
+        "input":"5countries_json",
         "output":"outc"
     }
 }
